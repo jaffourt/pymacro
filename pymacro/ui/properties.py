@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 
-
 class PropertyPanel(tk.LabelFrame):
     def __init__(self, master):
         super().__init__(master, text="Properties", padx=10, pady=10)
@@ -23,6 +22,14 @@ class PropertyPanel(tk.LabelFrame):
         ttk.Entry(self, textvariable=self.label_var).pack(fill=tk.X)
         ttk.Button(self, text="Apply Label", command=self.apply_label).pack(pady=(2, 10))
 
+        # Show incoming/outgoing
+        ttk.Label(self, text="Incoming:").pack(anchor=tk.W)
+        for src in node.incoming:
+            ttk.Label(self, text=f"• {src.label}").pack(anchor=tk.W)
+        ttk.Label(self, text="Outgoing:").pack(anchor=tk.W, pady=(5,0))
+        for dst in node.outgoing:
+            ttk.Label(self, text=f"• {dst.label}").pack(anchor=tk.W)
+
         if node.type == "Action":
             self.build_action_properties(node)
         else:
@@ -32,9 +39,9 @@ class PropertyPanel(tk.LabelFrame):
         if self.node:
             self.node.label = self.label_var.get()
             self.node.update_label()
+            self.set_node(self.node)
 
     def build_action_properties(self, node):
-        # List of recorded actions
         ttk.Label(self, text="Recorded Actions:").pack(anchor=tk.W)
         self.actions_listbox = tk.Listbox(self, height=5)
         self.actions_listbox.pack(fill=tk.BOTH, expand=True)
@@ -51,7 +58,6 @@ class PropertyPanel(tk.LabelFrame):
         self.set_node(node)
 
     def build_observer_properties(self, node):
-        # Display current bounding box
         ttk.Label(self, text="Bounding Box:").pack(anchor=tk.W)
         bbox_text = f"{node.bbox}" if node.bbox else "None"
         self.bbox_label = ttk.Label(self, text=bbox_text)

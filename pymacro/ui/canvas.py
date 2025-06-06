@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import messagebox
 from ui.nodes import NodeWidget, EdgeWidget
 
 class GraphCanvas(tk.Canvas):
