@@ -156,6 +156,26 @@ class NodeWidget:
     def update_label(self):
         self.canvas.itemconfig(self.text_id, text=f"{self.type}: {self.label}")
 
+    def delete(self):
+        # remove all incoming edges
+        for src_node in list(self.incoming):
+            for edge in list(self.canvas.edges):
+                if edge.source == src_node and edge.target == self:
+                    self.canvas.remove_edge(edge)
+                    break
+        # remove all outgoing edges
+        for dst_node in list(self.outgoing):
+            for edge in list(self.canvas.edges):
+                if edge.source == self and edge.target == dst_node:
+                    self.canvas.remove_edge(edge)
+                    break
+        # delete our shape & text
+        self.canvas.delete(self.shape_id)
+        self.canvas.delete(self.text_id)
+        # remove self from canvas.nodes
+        if self in self.canvas.nodes:
+            self.canvas.nodes.remove(self)
+
 
 class EdgeWidget:
     def __init__(self, canvas, source_node, target_node):

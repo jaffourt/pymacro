@@ -20,3 +20,22 @@ class GraphCanvas(tk.Canvas):
         for edge in self.edges:
             if edge.source == moved_node or edge.target == moved_node:
                 edge.update_position()
+
+    def remove_edge(self, edge):
+        """
+        Remove the given EdgeWidget from the canvas and deregister it from
+        source/target node's incoming/outgoing lists.
+        """
+        # 1) Erase the line itself:
+        self.delete(edge.line_id)
+
+        # 2) Remove the connection record from NodeWidget.incoming/outgoing:
+        if edge.source in self.nodes and edge.target in self.nodes:
+            if edge.target in edge.source.outgoing:
+                edge.source.outgoing.remove(edge.target)
+            if edge.source in edge.target.incoming:
+                edge.target.incoming.remove(edge.source)
+
+        # 3) Remove the EdgeWidget object from our list:
+        if edge in self.edges:
+            self.edges.remove(edge)
