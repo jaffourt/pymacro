@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-
 class PropertyPanel(tk.LabelFrame):
-    def __init__(self, master):
+    def __init__(self, master, canvas=None):
         super().__init__(master, text="Properties", padx=10, pady=10)
         self.node = None
+        # Accept canvas explicitly or get from master if not provided
+        self.canvas = canvas if canvas is not None else getattr(master, 'canvas', None)
 
     def clear_panel(self):
         for widget in self.winfo_children():
@@ -16,19 +17,23 @@ class PropertyPanel(tk.LabelFrame):
         self.clear_panel()
         ttk.Label(self, text=f"{node.type} Node: {node.label}", font=(None, 10, 'bold')).pack(anchor=tk.W)
 
-        # Common: label editing
         ttk.Label(self, text="Label:").pack(anchor=tk.W, pady=(5, 0))
         self.label_var = tk.StringVar(value=node.label)
         ttk.Entry(self, textvariable=self.label_var).pack(fill=tk.X)
         ttk.Button(self, text="Apply Label", command=self.apply_label).pack(pady=(2, 10))
 
-        # Show incoming/outgoing
         ttk.Label(self, text="Incoming:").pack(anchor=tk.W)
-        for src in node.incoming:
-            ttk.Label(self, text=f"• {src.label}").pack(anchor=tk.W)
+        if node.incoming:
+            for src in node.incoming:
+                ttk.Label(self, text=f"• {src.label}").pack(anchor=tk.W)
+        else:
+            ttk.Label(self, text="• None").pack(anchor=tk.W)
         ttk.Label(self, text="Outgoing:").pack(anchor=tk.W, pady=(5,0))
-        for dst in node.outgoing:
-            ttk.Label(self, text=f"• {dst.label}").pack(anchor=tk.W)
+        if node.outgoing:
+            for dst in node.outgoing:
+                ttk.Label(self, text=f"• {dst.label}").pack(anchor=tk.W)
+        else:
+            ttk.Label(self, text="• None").pack(anchor=tk.W)
 
         if node.type == "Action":
             self.build_action_properties(node)
@@ -42,6 +47,9 @@ class PropertyPanel(tk.LabelFrame):
             self.set_node(self.node)
 
     def build_action_properties(self, node):
+        self.loop_var = tk.BooleanVar(value=node.loop)
+        ttk.Checkbutton(self, text="Loop", variable=self.loop_var, command=lambda: self.toggle_loop(node)).pack(anchor=tk.W, pady=(5,0))
+
         ttk.Label(self, text="Recorded Actions:").pack(anchor=tk.W)
         self.actions_listbox = tk.Listbox(self, height=5)
         self.actions_listbox.pack(fill=tk.BOTH, expand=True)
@@ -50,39 +58,44 @@ class PropertyPanel(tk.LabelFrame):
 
         ttk.Button(self, text="Record", command=lambda: self.record_actions(node)).pack(pady=(5, 0))
 
+    def toggle_loop(self, node):
+        node.loop = self.loop_var.get()
+        node.refresh_appearance()
+
     def record_actions(self, node):
         messagebox.showinfo("Record", "Recording started... Press OK to stop.")
-        # Stub: In a real implementation, start a separate thread to capture events
-        # Here, we simulate a recorded action list
         node.actions = ["MoveTo (100,100)", "Click", "MoveTo (200,200)", "Click"]
         self.set_node(node)
 
     def build_observer_properties(self, node):
-        ttk.Label(self, text="Bounding Box:").pack(anchor=tk.W)
-        bbox_text = f"{node.bbox}" if node.bbox else "None"
-        self.bbox_label = ttk.Label(self, text=bbox_text)
-        self.bbox_label.pack(anchor=tk.W)
+        self.interrupt_var = tk.BooleanVar(value=node.interrupt)
+        ttk.Checkbutton(self, text="Interrupt", variable=self.interrupt_var, command=lambda: self.toggle_interrupt(node)).pack(anchor=tk.W, pady=(5,0))
 
-        ttk.Button(self, text="Select Bounding Box", command=lambda: self.select_bbox(node)).pack(pady=(5, 2))
-        ttk.Button(self, text="Visualize Bounding Box", command=lambda: self.visualize_bbox(node)).pack()
+        ttk.Label(self, text="Trigger Action:").pack(anchor=tk.W, pady=(5,0))
+        action_labels = [n.label for n in self.canvas.nodes if n.type == "Action"]
+        options = action_labels if action_labels else [""]
+        self.selected_action = tk.StringVar(value=node.outgoing[0].label if node.outgoing else options[0])
+        self.action_menu = ttk.OptionMenu(self, self.selected_action, self.selected_action.get(), *options)
+        self.action_menu.pack(fill=tk.X)
+        ttk.Button(self, text="Apply Action", command=lambda: self.apply_trigger(node)).pack(pady=(5, 0))
 
-    def select_bbox(self, node):
-        messagebox.showinfo("Select BBox", "Click and drag on screen to select bounding box.")
-        # Stub: In a real implementation, hide this window and overlay a fullscreen capture for user to drag
-        # Here, we simulate
-        node.bbox = (100, 100, 300, 300)
+    def toggle_interrupt(self, node):
+        node.interrupt = self.interrupt_var.get()
+        node.refresh_appearance()
+
+    def apply_trigger(self, node):
+        # Remove existing outgoing
+        for dst in list(node.outgoing):
+            # Find and remove edge
+            for edge in list(self.canvas.edges):
+                if edge.source == node and edge.target == dst:
+                    self.canvas.remove_edge(edge)
+        node.outgoing.clear()
+        node.incoming.clear()
+        # Find selected action node
+        target_label = self.selected_action.get()
+        for n in self.canvas.nodes:
+            if n.label == target_label and n.type == "Action":
+                self.canvas.add_edge(node, n)
+                break
         self.set_node(node)
-
-    def visualize_bbox(self, node):
-        if not node.bbox:
-            messagebox.showwarning("No BBox", "No bounding box set.")
-            return
-        x1, y1, x2, y2 = node.bbox
-        overlay = tk.Toplevel(self)
-        overlay.attributes('-fullscreen', True)
-        overlay.attributes('-alpha', 0.3)
-        overlay.attributes('-topmost', True)
-        c = tk.Canvas(overlay, bg='red', highlightthickness=0)
-        c.pack(fill=tk.BOTH, expand=True)
-        c.create_rectangle(x1, y1, x2, y2, outline='blue', width=3)
-        ttk.Button(overlay, text="Close", command=overlay.destroy).place(x=10, y=10)
