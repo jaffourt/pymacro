@@ -1,0 +1,1 @@
+PYTHONPATH=. python pymacro/run.py

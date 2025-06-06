@@ -8,5 +8,5 @@ brew install python-tk
 
 # Usage
 ```bash
-python pymacro/main.py
+./run.sh
 ```
