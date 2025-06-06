@@ -2,11 +2,20 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 class ToolbarPanel(tk.Frame):
-    def __init__(self, master, canvas):
+    def __init__(self, master, canvas, graph_manager):
         super().__init__(master)
         self.canvas = canvas
+        self.graph_manager = graph_manager
         ttk.Button(self, text="Add Observer", command=self.add_observer).pack(side=tk.LEFT, padx=5, pady=5)
         ttk.Button(self, text="Add Action", command=self.add_action).pack(side=tk.LEFT, padx=5, pady=5)
+
+        # ===== New Run/Stop Buttons =====
+        self.run_btn = ttk.Button(self, text="▶ Run", command=self.graph_manager.run)
+        self.run_btn.pack(side=tk.LEFT, padx=5)
+
+        self.stop_btn = ttk.Button(self, text="■ Stop", command=self.graph_manager.stop)
+        self.stop_btn.pack(side=tk.LEFT, padx=5)
+
         # Help button on top-right
         self.help_btn = ttk.Button(self, text="?", width=2, command=self.show_help)
         self.help_btn.pack(side=tk.RIGHT, padx=5, pady=5)

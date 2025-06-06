@@ -16,9 +16,11 @@ class NodeWidget:
         if self.type == "Action":
             self.actions = []  # list of recorded actions
             self.loop = False
+            self.backend_actions = [] # will hold real MouseClick, etc.
         else:  # Observer
             self.bbox = None   # (x1, y1, x2, y2)
             self.interrupt = False
+            self.backend_observer = None # will hold a real RegionObserver
 
         # Track connections
         self.incoming = []  # list of source NodeWidgets
