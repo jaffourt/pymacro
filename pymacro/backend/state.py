@@ -2,8 +2,8 @@ import time
 from dataclasses import dataclass
 from typing import List, Optional
 
-from macros.backend.observer import Observer
-from macros.backend.action import Action
+from pymacro.backend.observer import Observer
+from pymacro.backend.action import Action
 
 
 @dataclass
