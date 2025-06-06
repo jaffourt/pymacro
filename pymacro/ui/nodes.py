@@ -130,6 +130,7 @@ class NodeWidget:
                     messagebox.showwarning("Connection", "Observer can only link to one action.")
                 else:
                     self.canvas.add_edge(self, target)
+                    self.on_select_callback(self)
             elif self.type == "Action" and target.type == "Action":
                 self.canvas.add_edge(self, target)
             else:
